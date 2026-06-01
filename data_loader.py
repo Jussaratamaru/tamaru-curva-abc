@@ -1,17 +1,35 @@
-"""Carrega vendas da pasta Vendas/ (mesma raiz do app)."""
+"""Carrega vendas da pasta Vendas/ do projeto principal (pasta pai)."""
 
 from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
 
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parent.parent
 VENDAS_DIR = ROOT / "Vendas"
 
 NUMERIC = [
     "Quantidade", "Vl. Unitário", "Vl. Mercadoria", "Vl. Total",
     "Receita Líquida de Vendas", "Resultado Líquido de Vendas",
 ]
+
+GRUPOS_FORNECEDOR = ["SUMITOMO", "QUAKER", "INSIZE", "TAMARU", "OUTROS"]
+
+
+def grupo_fornecedor(nome) -> str:
+    """Mesma regra do BI: SUMITOMO, QUAKER (RJ+SP), INSIZE, TAMARU (+ Balzers/Topdrill), OUTROS."""
+    if pd.isna(nome) or str(nome).strip() == "":
+        return "OUTROS"
+    n = str(nome).upper()
+    if "QUAKER" in n:
+        return "QUAKER"
+    if "SUMITOMO" in n:
+        return "SUMITOMO"
+    if "INSIZE" in n:
+        return "INSIZE"
+    if "TAMARU" in n or "TOPDRILL" in n or "BALZERS" in n:
+        return "TAMARU"
+    return "OUTROS"
 
 
 def _list_vendas_files() -> list[Path]:
@@ -55,4 +73,8 @@ def load_vendas() -> pd.DataFrame:
     df["Item"] = df["Item"].astype(str).str.strip().str.split(".").str[0]
     df["Cod.Cliente"] = df["Cod.Cliente"].astype(str).str.strip().str.split(".").str[0]
     df["AnoMes_str"] = df["Emissão"].dt.strftime("%Y-%m")
+    if "Fornecedor_Fantasia" in df.columns:
+        df["Fornecedor_Grupo"] = df["Fornecedor_Fantasia"].apply(grupo_fornecedor)
+    else:
+        df["Fornecedor_Grupo"] = "OUTROS"
     return df.dropna(subset=["Emissão"])

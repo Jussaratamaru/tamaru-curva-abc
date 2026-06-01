@@ -179,8 +179,10 @@ ABC_INFORMATIVO = (
 
 NIVEL_OPCOES = ["Fornecedor", "Cliente", "Produto", "Representante"]
 
+GRUPOS_FORNECEDOR = ["SUMITOMO", "QUAKER", "INSIZE", "TAMARU", "OUTROS"]
+
 NIVEL_COLUNAS: dict[str, tuple[str, str]] = {
-    "Fornecedor": ("Fornecedor_Fantasia", "Fornecedor_Fantasia"),
+    "Fornecedor": ("Fornecedor_Grupo", "Fornecedor_Grupo"),
     "Cliente": ("Cod.Cliente", "Cliente"),
     "Produto": ("Item", "Descrição do Item"),
     "Representante": ("Representante", "Representante"),
@@ -878,8 +880,8 @@ def render_pagina_curva_abc(
         f1, f2, f3 = st.columns(3)
         with f1:
             forn_sel = st.multiselect(
-                "Fornecedor",
-                sorted(vendas["Fornecedor_Fantasia"].dropna().unique()),
+                "Fornecedor (grupo)",
+                GRUPOS_FORNECEDOR,
                 default=[],
                 placeholder="Todos",
                 key="abc_forn",
@@ -916,7 +918,7 @@ def render_pagina_curva_abc(
 
     base = vdf.copy()
     if forn_sel:
-        base = base[base["Fornecedor_Fantasia"].isin(forn_sel)]
+        base = base[base["Fornecedor_Grupo"].isin(forn_sel)]
     if cli_sel:
         base = base[base["Cliente"].isin(cli_sel)]
     if item_sel:
