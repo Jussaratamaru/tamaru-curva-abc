@@ -669,7 +669,33 @@ def _preencher_aba_abc(
     for ci in range(1, n_total + 1):
         ws.column_dimensions[get_column_letter(ci)].width = 14
     ws.column_dimensions["F"].width = 30
-    ws.freeze_panes = f"A{row_ptr}"
+    ws.freeze_panes = "A5"
+    _configurar_impressao_abc(ws, hdr_sub=hdr_sub, last_row=row_ptr - 1, n_total=n_total)
+
+
+def _configurar_impressao_abc(ws, *, hdr_sub: int, last_row: int, n_total: int) -> None:
+    """A4 paisagem, 1 página de largura, col. A + linha de cabeçalho repetem; grade fina G:J."""
+    from openpyxl.styles import Border, Side
+    from openpyxl.utils import get_column_letter
+    from openpyxl.worksheet.page import PageMargins
+
+    col_media_ini = N_COLS_ABC + 1  # G
+    col_media_fim = N_COLS_ABC + 4    # J
+    thin = Side(style="thin", color="AAAAAA")
+
+    for r in range(hdr_sub, last_row + 1):
+        for c in range(col_media_ini, col_media_fim + 1):
+            ws.cell(r, c).border = Border(left=thin, right=thin, top=thin, bottom=thin)
+
+    ws.print_area = f"A1:{get_column_letter(n_total)}{last_row}"
+    ws.print_title_rows = f"{hdr_sub}:{hdr_sub}"
+    ws.print_title_cols = "A:A"
+    ws.page_margins = PageMargins(left=0.35, right=0.35, top=0.45, bottom=0.45, header=0.2, footer=0.2)
+    ws.page_setup.orientation = ws.ORIENTATION_LANDSCAPE
+    ws.page_setup.paperSize = ws.PAPERSIZE_A4
+    ws.sheet_properties.pageSetUpPr.fitToPage = True
+    ws.page_setup.fitToWidth = 1
+    ws.page_setup.fitToHeight = 0
 
 
 def exportar_abc_legacy_excel(
