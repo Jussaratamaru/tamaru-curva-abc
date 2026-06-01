@@ -9,7 +9,7 @@ import streamlit as st
 import pandas as pd
 
 from abc_curva import render_pagina_curva_abc
-from data_loader import load_vendas, ultima_atualizacao_vendas
+from data_loader import load_vendas, ultima_atualizacao_vendas, VENDAS_DIR, VENDAS_ORIGEM
 
 st.set_page_config(
     page_title="Curva ABC | Tamaru",
@@ -123,7 +123,8 @@ st.markdown(
     "<h1>📊 Curva ABC</h1>"
     "<p>Layout ERP · níveis hierárquicos · export Excel</p>"
     f'<p class="abc-last-update">Última atualização: <strong>{ultima_str}</strong>'
-    f" · arquivo <strong>{html.escape(ultimo_arquivo)}</strong></p>"
+    f" · arquivo <strong>{html.escape(ultimo_arquivo)}</strong>"
+    f"<br><span style='font-size:0.78rem;'>Dados: {html.escape(str(VENDAS_DIR))}</span></p>"
     "</div>",
     unsafe_allow_html=True,
 )

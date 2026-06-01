@@ -1,12 +1,16 @@
-"""Carrega vendas da pasta Vendas/ do projeto principal (pasta pai)."""
+"""Carrega vendas — local: pasta Vendas do BI; nuvem: Vendas/ deste repo."""
 
+from __future__ import annotations
+
+import os
 from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
 
-ROOT = Path(__file__).resolve().parent.parent
-VENDAS_DIR = ROOT / "Vendas"
+APP_ROOT = Path(__file__).resolve().parent
+BI_VENDAS_DIR = APP_ROOT.parent / "Base de dados IA" / "Vendas"
+LOCAL_VENDAS_DIR = APP_ROOT / "Vendas"
 
 NUMERIC = [
     "Quantidade", "Vl. Unitário", "Vl. Mercadoria", "Vl. Total",
@@ -30,6 +34,35 @@ def grupo_fornecedor(nome) -> str:
     if "TAMARU" in n or "TOPDRILL" in n or "BALZERS" in n:
         return "TAMARU"
     return "OUTROS"
+
+
+def _has_vendas_xlsx(folder: Path) -> bool:
+    return any(
+        f.suffix.lower() == ".xlsx"
+        and not f.name.startswith("~$")
+        and f.name != "Comissoes.xlsx"
+        for f in folder.glob("*.xlsx")
+    )
+
+
+def resolve_vendas_dir() -> tuple[Path, str]:
+    """
+    Local (PC): usa Base de dados IA/Vendas — mesma pasta do BI.
+    Nuvem: usa Vendas/ dentro deste repositório.
+    """
+    env = os.environ.get("VENDAS_DIR", "").strip()
+    if env:
+        p = Path(env)
+        if p.is_dir():
+            return p, "variável VENDAS_DIR"
+
+    if BI_VENDAS_DIR.is_dir() and _has_vendas_xlsx(BI_VENDAS_DIR):
+        return BI_VENDAS_DIR, "BI (Base de dados IA/Vendas)"
+
+    return LOCAL_VENDAS_DIR, "pasta Vendas deste app (nuvem ou fallback)"
+
+
+VENDAS_DIR, VENDAS_ORIGEM = resolve_vendas_dir()
 
 
 def _list_vendas_files() -> list[Path]:
@@ -57,7 +90,10 @@ def _parse_date(series: pd.Series) -> pd.Series:
 def load_vendas() -> pd.DataFrame:
     files = _list_vendas_files()
     if not files:
-        raise FileNotFoundError(f"Nenhum arquivo em {VENDAS_DIR}")
+        raise FileNotFoundError(
+            f"Nenhum arquivo em {VENDAS_DIR}. "
+            f"Coloque os Excel em: {BI_VENDAS_DIR}"
+        )
 
     df = pd.concat([pd.read_excel(f) for f in files], ignore_index=True)
     df.columns = df.columns.str.strip()
